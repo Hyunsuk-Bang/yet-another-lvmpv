@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lvmpv-controller
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lvmpv-controller
+  template:
+    metadata:
+      labels:
+        app: lvmpv-controller
+    spec:
+      serviceAccountName: lvmpv-controller
+      containers:
+        # Sidecar: watches PVCs and calls our CreateVolume / DeleteVolume RPCs
+        - name: external-provisioner
+          image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
+          args:
+            - --csi-address=/csi/csi.sock
+            - --v=5
+            - --feature-gates=Topology=true
+            - --leader-election=false   # single replica, no need for election
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+
+        # Our controller binary
+        - name: lvmpv-controller
+          image: lvmpv:latest
+          imagePullPolicy: Never          # loaded into Kind via kind load
+          args:
+            - --mode=controller
+            - --csi-endpoint=unix:///csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+
+      volumes:
+        - name: socket-dir
+          emptyDir: {}                    # shared socket between sidecars in this pod

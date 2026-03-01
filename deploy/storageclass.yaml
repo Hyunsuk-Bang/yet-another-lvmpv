@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: lvm-sc
+provisioner: lvmpv.yetanother.io
+# WaitForFirstConsumer: delay PV binding until a pod is scheduled.
+# This lets the Kubernetes scheduler pick a node considering both
+# CPU/memory AND storage capacity (via our GetCapacity RPC) together.
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+parameters:
+  vgName: VG01

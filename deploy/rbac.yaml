@@ -1,0 +1,99 @@
+# --- Controller ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lvmpv-controller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lvmpv-controller
+rules:
+  # Our CRD
+  - apiGroups: ["lvmpv.yetanother.io"]
+    resources: ["logicalvolumes"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
+  - apiGroups: ["lvmpv.yetanother.io"]
+    resources: ["logicalvolumes/status"]
+    verbs: ["get", "update", "patch"]
+  # Read Node annotations for GetCapacity
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  # external-provisioner needs these to manage PVs
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["create", "delete", "get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lvmpv-controller
+subjects:
+  - kind: ServiceAccount
+    name: lvmpv-controller
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: lvmpv-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+# --- Node ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lvmpv-node
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lvmpv-node
+rules:
+  # Reconciler watches and updates LogicalVolumes
+  - apiGroups: ["lvmpv.yetanother.io"]
+    resources: ["logicalvolumes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["lvmpv.yetanother.io"]
+    resources: ["logicalvolumes/status"]
+    verbs: ["get", "update", "patch"]
+  # CapacityReporter patches Node annotations
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "patch"]
+  # controller-runtime leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "get", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lvmpv-node
+subjects:
+  - kind: ServiceAccount
+    name: lvmpv-node
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: lvmpv-node
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: lvmpv.yetanother.io
+spec:
+  attachRequired: false       # LVM is node-local, no attach/detach needed
+  volumeLifecycleModes:
+    - Persistent
+  podInfoOnMount: false
