@@ -1,9 +1,11 @@
 CONTROLLER_GEN    ?= /Users/hyunsuk/go/bin/controller-gen
-CONTROLLER_IMAGE  ?= lvmpv-controller:latest
-NODE_IMAGE        ?= lvmpv-node:latest
+DOCKER_USER       ?= banghsk99
+TAG               ?= latest
+CONTROLLER_IMAGE  ?= $(DOCKER_USER)/lvmpv-controller:$(TAG)
+NODE_IMAGE        ?= $(DOCKER_USER)/lvmpv-node:$(TAG)
 KIND_CLUSTER      ?= lvmpv-test
 
-.PHONY: all generate manifests install docker-build kind-load deploy undeploy test-deploy install-tools tidy
+.PHONY: all generate manifests install docker-build docker-push kind-load deploy undeploy test-deploy install-tools tidy
 
 all: generate manifests
 
@@ -27,6 +29,11 @@ install-tools:
 docker-build:
 	docker build -f Dockerfile.controller -t $(CONTROLLER_IMAGE) .
 	docker build -f Dockerfile.node       -t $(NODE_IMAGE) .
+
+## Push both images to Docker Hub
+docker-push: docker-build
+	docker push $(CONTROLLER_IMAGE)
+	docker push $(NODE_IMAGE)
 
 ## Load both images into Kind (no registry needed)
 kind-load: docker-build

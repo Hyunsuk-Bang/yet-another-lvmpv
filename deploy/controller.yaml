@@ -29,7 +29,7 @@ spec:
 
         # Our controller binary
         - name: lvmpv-controller
-          image: lvmpv-controller:latest
+          image: banghsk99/lvmpv-controller:latest
           imagePullPolicy: Never          # loaded into Kind via kind load
           args:
             - --mode=controller
