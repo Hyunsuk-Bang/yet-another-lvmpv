@@ -55,17 +55,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 }
 
 func (r *Reconciler) reconcileCreate(ctx context.Context, lv *lvmpvv1.LogicalVolume) (ctrl.Result, error) {
-	if out, err := exec.CommandContext(ctx,
+	cmd := exec.CommandContext(ctx,
 		"lvcreate",
 		"--size", lv.Spec.Size,
 		"--name", lv.Name,
-		"-W", "n", // skip wipesignatures: lvcreate can't find /dev/VG/<name> without udev
-		"-Z", "n", // skip zeroing: mkfs.ext4 overwrites it anyway
 		lv.Spec.VGName,
-	).CombinedOutput(); err != nil {
+	)
+	if out, err := cmd.CombinedOutput(); err != nil {
 		return r.setFailed(ctx, lv, fmt.Sprintf("lvcreate failed: %s: %v", string(out), err))
 	}
-
 	lv.Status.Phase = lvmpvv1.LogicalVolumeReady
 	lv.Status.Message = ""
 	if err := r.Status().Update(ctx, lv); err != nil {
