@@ -30,7 +30,7 @@ spec:
         # Our controller binary
         - name: lvmpv-controller
           image: banghsk99/lvmpv-controller:latest
-          imagePullPolicy: Never          # loaded into Kind via kind load
+          imagePullPolicy: IfNotPresent   # uses local image if present, pulls otherwise
           args:
             - --mode=controller
             - --csi-endpoint=unix:///csi/csi.sock

@@ -27,7 +27,7 @@ spec:
               mountPath: /registration
         - name: lvmpv-node
           image: banghsk99/lvmpv-node:latest
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent   # uses local image if present, pulls otherwise
           args:
             - --mode=node
             - --csi-endpoint=unix:///csi/csi.sock

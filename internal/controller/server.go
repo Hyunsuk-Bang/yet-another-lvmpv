@@ -57,6 +57,19 @@ func (s *Server) GetPluginCapabilities(_ context.Context, _ *csi.GetPluginCapabi
 					},
 				},
 			},
+			// Declaring this tells the external-provisioner that our driver
+			// understands topology. It will then:
+			//   1. Wait for a pod to be scheduled (WaitForFirstConsumer)
+			//   2. Pass AccessibilityRequirements.Preferred[0] in CreateVolume
+			// Without this, the provisioner skips topology entirely and calls
+			// CreateVolume immediately with no node information.
+			{
+				Type: &csi.PluginCapability_Service_{
+					Service: &csi.PluginCapability_Service{
+						Type: csi.PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS,
+					},
+				},
+			},
 		},
 	}, nil
 }
