@@ -78,10 +78,11 @@ func (s *Server) NodeGetCapabilities(_ context.Context, _ *csi.NodeGetCapabiliti
 func (s *Server) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
 	log.Info().Str("volumeID", req.VolumeId).Str("stagingPath", req.StagingTargetPath).Msg("NodeStageVolume")
 
-	devicePath, ok := req.VolumeContext["devicePath"]
+	vgName, ok := req.VolumeContext["vgName"]
 	if !ok {
-		return nil, status.Error(codes.InvalidArgument, "devicePath missing from VolumeContext")
+		return nil, status.Error(codes.InvalidArgument, "vgName missing from VolumeContext")
 	}
+	devicePath := fmt.Sprintf("/dev/%s/%s", vgName, req.VolumeId)
 
 	if err := os.MkdirAll(req.StagingTargetPath, 0750); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create staging dir: %v", err)

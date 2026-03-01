@@ -127,7 +127,6 @@ func (s *Server) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 	}
 
 	// Wait for the node reconciler to run lvcreate and set status.phase = Ready
-	var devicePath string
 	err := wait.PollUntilContextTimeout(ctx, 2*time.Second, 2*time.Minute, true,
 		func(ctx context.Context) (bool, error) {
 			fetched := &lvmpvv1.LogicalVolume{}
@@ -136,7 +135,6 @@ func (s *Server) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 			}
 			switch fetched.Status.Phase {
 			case lvmpvv1.LogicalVolumeReady:
-				devicePath = fetched.Status.DevicePath
 				return true, nil
 			case lvmpvv1.LogicalVolumeFailed:
 				return false, fmt.Errorf("volume failed: %s", fetched.Status.Message)
@@ -153,8 +151,9 @@ func (s *Server) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest)
 		Volume: &csi.Volume{
 			VolumeId:      req.Name,
 			CapacityBytes: req.CapacityRange.GetRequiredBytes(),
-			// devicePath is passed through to NodeStageVolume via VolumeContext
-			VolumeContext: map[string]string{"devicePath": devicePath},
+			VolumeContext: map[string]string{
+				"vgName": vgName,
+			},
 			AccessibleTopology: []*csi.Topology{
 				{Segments: map[string]string{"lvmpv.yetanother.io/node": nodeName}},
 			},
