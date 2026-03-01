@@ -1,3 +1,6 @@
+// Package v1 contains API Schema definitions for the lvmpv.yetanother.io v1 API group.
+// +kubebuilder:object:generate=true
+// +groupName=lvmpv.yetanother.io
 package v1
 
 import (
