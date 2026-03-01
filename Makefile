@@ -1,6 +1,7 @@
-CONTROLLER_GEN ?= /Users/hyunsuk/go/bin/controller-gen
-IMAGE         ?= lvmpv:latest
-KIND_CLUSTER  ?= lvmpv-test
+CONTROLLER_GEN    ?= /Users/hyunsuk/go/bin/controller-gen
+CONTROLLER_IMAGE  ?= lvmpv-controller:latest
+NODE_IMAGE        ?= lvmpv-node:latest
+KIND_CLUSTER      ?= lvmpv-test
 
 .PHONY: all generate manifests install docker-build kind-load deploy undeploy test-deploy install-tools tidy
 
@@ -22,13 +23,15 @@ install: manifests
 install-tools:
 	go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest
 
-## Build the driver Docker image
+## Build both Docker images
 docker-build:
-	docker build -t $(IMAGE) .
+	docker build -f Dockerfile.controller -t $(CONTROLLER_IMAGE) .
+	docker build -f Dockerfile.node       -t $(NODE_IMAGE) .
 
-## Load the image into Kind (no registry needed)
+## Load both images into Kind (no registry needed)
 kind-load: docker-build
-	kind load docker-image $(IMAGE) --name $(KIND_CLUSTER)
+	kind load docker-image $(CONTROLLER_IMAGE) --name $(KIND_CLUSTER)
+	kind load docker-image $(NODE_IMAGE)        --name $(KIND_CLUSTER)
 
 ## Deploy everything to the current cluster
 deploy: manifests kind-load
